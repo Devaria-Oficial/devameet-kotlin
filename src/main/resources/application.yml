@@ -19,3 +19,4 @@ spring:
 devameet:
   secrets:
     aes-secret: chavedecriptogra
+    jwt-secret: chavedecriptografiajwt
