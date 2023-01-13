@@ -17,9 +17,17 @@ import kotlin.jvm.Throws
 class UserService (
     @Value("\${devameet.secrets.aes-secret}")
     private val secret: String,
-    val userRepository: UserRepository
+    private val userRepository: UserRepository
 ){
     private val log = LoggerFactory.getLogger(UserService::class.java)
+
+    fun getUser(userId: Long) : User? {
+        val optional =  userRepository.findById(userId)
+        if(optional != null && optional.isPresent){
+            return optional.get()
+        }
+        return null
+    }
 
     @Throws(BadRequestException::class)
     fun create(dto: RegisterRequestDto){
