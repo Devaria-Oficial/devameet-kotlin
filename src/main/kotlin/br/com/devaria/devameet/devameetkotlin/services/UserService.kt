@@ -1,6 +1,7 @@
 package br.com.devaria.devameet.devameetkotlin.services
 
 import br.com.devaria.devameet.devameetkotlin.dtos.RegisterRequestDto
+import br.com.devaria.devameet.devameetkotlin.dtos.UserUpdateRequestDto
 import br.com.devaria.devameet.devameetkotlin.entities.User
 import br.com.devaria.devameet.devameetkotlin.exceptions.BadRequestException
 import br.com.devaria.devameet.devameetkotlin.repositories.UserRepository
@@ -72,5 +73,31 @@ class UserService (
 
         userRepository.save(user)
         log.info("create - success")
+    }
+
+    @Throws(BadRequestException::class)
+    fun update(user: User, dto: UserUpdateRequestDto){
+        log.info("update - start")
+
+        val messages = mutableListOf<String>()
+
+        if(!dto.name.isNullOrBlank() && dto.name.length < 2){
+            messages.add("Nome inválido")
+        }else if(!dto.name.isNullOrEmpty() && !dto.name.isNullOrBlank()) {
+            user.name = dto.name
+        }
+
+        if(!dto.avatar.isNullOrBlank() && dto.avatar.length < 5){
+            messages.add("Avatar inválido")
+        }else if(!dto.avatar.isNullOrEmpty() && !dto.avatar.isNullOrBlank()) {
+            user.avatar = dto.avatar
+        }
+
+        if(messages.size > 0){
+            throw BadRequestException(messages)
+        }
+
+        userRepository.save(user)
+        log.info("update - finish success")
     }
 }

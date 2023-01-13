@@ -14,5 +14,5 @@ data class User(
     val email: String = "",
     var name: String = "",
     var password: String = "",
-    val avatar: String = ""
+    var avatar: String = ""
 )
