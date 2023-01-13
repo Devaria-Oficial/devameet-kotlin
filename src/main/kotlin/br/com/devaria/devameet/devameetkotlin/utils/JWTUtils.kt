@@ -20,8 +20,9 @@ class JWTUtils(
     }
 
     private fun getClaimsToken(token: String) = try {
-        Jwts.parser().setSigningKey(secretKeyJwt.toByteArray()).parseClaimsJwt(token).body
+        Jwts.parser().setSigningKey(secretKeyJwt.toByteArray()).parseClaimsJws(token).body
     }catch (ex:Exception){
+        println(ex)
         null
     }
 
