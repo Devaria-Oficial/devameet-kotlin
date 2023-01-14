@@ -62,7 +62,7 @@ class RoomService(
                 clientId = it.clientId,
                 user = it.userPosition!!.id,
                 name = it.name,
-                avatar = "",
+                avatar = it.avatar,
                 x = it.x,
                 y = it.y,
                 orientation = it.orientation,
@@ -107,26 +107,16 @@ class RoomService(
                 orientation = "down"
             )
         }else{
-            val messages = mutableListOf<String>()
-
-            if(dto.x < 0 || dto.x > 8){
-                messages.add("Eixo x inválido")
+            if(dto.x > 0 && dto.x < 8){
+                loggedUserInRoom.x = dto.x
             }
-            if(dto.y < 0 || dto.y > 8){
-                messages.add("Eixo y inválido")
+            if(dto.y > 0 && dto.y < 8){
+                loggedUserInRoom.y = dto.y
             }
 
-            if(dto.orientation.isNullOrEmpty() || dto.orientation.isNullOrBlank()){
-                messages.add("Orientação inválida")
+            if(!dto.orientation.isNullOrEmpty() && !dto.orientation.isNullOrBlank()){
+                loggedUserInRoom.orientation = dto.orientation
             }
-
-            if(messages.size > 0){
-                throw BadRequestException(messages)
-            }
-
-            loggedUserInRoom.x = dto.x
-            loggedUserInRoom.y = dto.y
-            loggedUserInRoom.orientation = dto.orientation
         }
 
         positionRepository.save(loggedUserInRoom)

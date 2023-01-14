@@ -1,9 +1,6 @@
 package br.com.devaria.devameet.devameetkotlin.services
 
-import br.com.devaria.devameet.devameetkotlin.dtos.room.JoinRoomRequestDto
-import br.com.devaria.devameet.devameetkotlin.dtos.room.JoinRoomSocketResponseDto
-import br.com.devaria.devameet.devameetkotlin.dtos.room.UpdatePositionRequestDto
-import br.com.devaria.devameet.devameetkotlin.dtos.room.UpdateUsersSocketResponseDto
+import br.com.devaria.devameet.devameetkotlin.dtos.room.*
 import br.com.devaria.devameet.devameetkotlin.entities.Position
 import com.corundumstudio.socketio.SocketIOClient
 import com.corundumstudio.socketio.SocketIOServer
@@ -27,6 +24,40 @@ class SocketService(
         this.server.addConnectListener(onConnected())
         this.server.addDisconnectListener(onDisconnected())
         this.server.addEventListener("join", JoinRoomRequestDto::class.java, onJoin())
+        this.server.addEventListener("move", MoveSocketRequestDto::class.java, onMove())
+        this.server.addEventListener("toggl-mute-user", ToggleMutedSocketRequestDto::class.java, onTogglMute())
+    }
+
+    private fun onTogglMute(): DataListener<ToggleMutedSocketRequestDto>? {
+        return DataListener { client, data, ackSender ->
+            val dto = UpdatePositionRequestDto(
+                userId = data.userId,
+                clientId = client.sessionId.toString(),
+                link = data.link,
+                muted = data.muted
+            )
+
+            roomService.updateUserMuted(dto)
+            val users = roomService.listPosition(data.link)
+            sendToAllClients("${data.link}-update-user-list", client, UpdateUsersSocketResponseDto(users))
+        }
+    }
+
+    private fun onMove(): DataListener<MoveSocketRequestDto>? {
+        return DataListener { client, data, ackSender ->
+            val dto = UpdatePositionRequestDto(
+                userId = data.userId,
+                clientId = client.sessionId.toString(),
+                link = data.link,
+                x = data.x,
+                y = data.y,
+                orientation = data.orientation
+            )
+
+            roomService.updateUserPosition(dto)
+            val users = roomService.listPosition(data.link)
+            sendToAllClients("${data.link}-update-user-list", client, UpdateUsersSocketResponseDto(users))
+        }
     }
 
     private fun onJoin(): DataListener<JoinRoomRequestDto>? {
@@ -59,11 +90,21 @@ class SocketService(
     }
 
     private fun onDisconnected(): DisconnectListener? {
-        return DisconnectListener { client -> log.info("ClientId ${client.sessionId} disconnected to socket") }
+        return DisconnectListener { client ->
+            val position = roomService.findByClientId(client.sessionId.toString())
+
+            if(position != null){
+                roomService.deletePositionByClientId(client.sessionId.toString())
+                sendToAllClients("${position?.meetPosition?.link}-remove-user", client, DisconnectedRoomSocketResponseDto(client.sessionId.toString()))
+                log.info("ClientId ${client.sessionId} disconnected to socket")
+            }
+        }
     }
 
     private fun onConnected(): ConnectListener? {
-        return ConnectListener { client -> log.info("ClientId ${client.sessionId} connected to socket") }
+        return ConnectListener { client ->
+            //log.info("ClientId ${client.sessionId} connected to socket")
+        }
     }
 
     private fun sendToAllClients(eventName: String, senderClient: SocketIOClient, data: Any) {
