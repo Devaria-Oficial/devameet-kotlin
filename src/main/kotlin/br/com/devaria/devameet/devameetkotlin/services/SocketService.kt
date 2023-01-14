@@ -26,7 +26,10 @@ class SocketService(
         this.server.addEventListener("join", JoinRoomRequestDto::class.java, onJoin())
         this.server.addEventListener("move", MoveSocketRequestDto::class.java, onMove())
         this.server.addEventListener("toggl-mute-user", ToggleMutedSocketRequestDto::class.java, onTogglMute())
+        this.server.addEventListener("call-user", OfferAnswerSocketDto::class.java, onCallUser())
+        this.server.addEventListener("make-answer", OfferAnswerSocketDto::class.java, onMakeAnswer())
     }
+
 
     private fun onTogglMute(): DataListener<ToggleMutedSocketRequestDto>? {
         return DataListener { client, data, ackSender ->
@@ -89,6 +92,23 @@ class SocketService(
         }
     }
 
+
+    private fun onMakeAnswer(): DataListener<OfferAnswerSocketDto>? {
+        return DataListener { client, data, ackSender ->
+            log.info("onMakeAnswer: ${client.sessionId} to: ${data.to}")
+            data.socket = client.sessionId.toString()
+            sendToSpecificClient("answer-made", client, data)
+        }
+    }
+
+    private fun onCallUser(): DataListener<OfferAnswerSocketDto>? {
+        return DataListener { client, data, ackSender ->
+            log.info("onCallUser: ${client.sessionId} to: ${data.to}")
+            data.socket = client.sessionId.toString()
+            sendToSpecificClient("call-made", client, data)
+        }
+    }
+
     private fun onDisconnected(): DisconnectListener? {
         return DisconnectListener { client ->
             val position = roomService.findByClientId(client.sessionId.toString())
@@ -119,5 +139,12 @@ class SocketService(
                 client.sendEvent(eventName, data)
             }
         }
+    }
+
+    private fun sendToSpecificClient(eventName: String, senderClient: SocketIOClient, data: OfferAnswerSocketDto) {
+        val clientToSend = senderClient.namespace.getRoomOperations("").clients.find {
+            it.sessionId.toString() == data.to
+        }
+        clientToSend?.sendEvent(eventName, data)
     }
 }
