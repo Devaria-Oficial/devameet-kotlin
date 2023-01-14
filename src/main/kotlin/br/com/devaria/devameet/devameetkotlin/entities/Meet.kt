@@ -19,5 +19,9 @@ data class Meet(
 
     @JsonBackReference
     @OneToMany(mappedBy = "meet")
-    val objects: List<MeetObject> = emptyList()
+    val objects: List<MeetObject> = emptyList(),
+
+    @JsonBackReference
+    @OneToMany(mappedBy = "meetPosition")
+    val positions : List<Position> = emptyList()
 )

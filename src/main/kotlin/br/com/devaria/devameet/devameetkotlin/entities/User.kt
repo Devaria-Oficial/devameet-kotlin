@@ -23,5 +23,9 @@ data class User(
 
     @JsonBackReference
     @OneToMany(mappedBy = "user")
-    val meets : List<Meet> = emptyList()
+    val meets : List<Meet> = emptyList(),
+
+    @JsonBackReference
+    @OneToMany(mappedBy = "userPosition")
+    val positions : List<Position> = emptyList()
 )
